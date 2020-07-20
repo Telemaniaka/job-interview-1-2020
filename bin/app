@@ -1,0 +1,10 @@
+#!/usr/bin/env php
+<?php
+require __DIR__ . '/../vendor/autoload.php';
+
+use \Recruitment\CommissionTask\App;
+use Recruitment\CommissionTask\Service\StdOut;
+
+$output = new StdOut();
+$app    = new App($_SERVER['argv'], $output);
+$app->run();
