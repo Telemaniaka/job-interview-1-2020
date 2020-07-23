@@ -10,15 +10,16 @@ class Operation
 {
     protected $data;
     protected $commission = 0;
-    protected $commissionRate = 0;
     protected $date;
     protected $amount;
     protected $currency;
     protected $operationLog;
 
-    public static $supprtedOperations = [
-        'cash_out' => CashOut::class,
-        'cash_in' => CashIn::class,
+    protected $commissionRate = 0;
+
+    public static $supportedOperations = [
+        'cashOut' => CashOut::class,
+        'cashIn' => CashIn::class,
     ];
 
     public function __construct(OperationLog $log)
@@ -29,6 +30,15 @@ class Operation
     public function setData(array $data)
     {
         $this->data = $data;
+    }
+
+    public function setCommissionRates(array $rates)
+    {
+        foreach ($rates as $property => $value) {
+            if (property_exists($this, $property)) {
+                $this->$property = $value;
+            }
+        }
     }
 
     public function process()

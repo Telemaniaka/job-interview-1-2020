@@ -8,9 +8,7 @@ use Recruitment\CommissionTask\Currency\Currency;
 
 class CashIn extends Operation
 {
-    protected $commissionRate = 0.03;
-    protected $maxCommission = 5;
-    protected $user;
+    protected $maxCommission;
 
     public function setData(array $data)
     {

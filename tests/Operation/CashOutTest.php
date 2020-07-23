@@ -11,10 +11,21 @@ use Recruitment\CommissionTask\Service\OperationLog;
 class CashOutTest extends TestCase
 {
     protected $operationLog;
+    protected $rates;
 
     protected function setUp()
     {
         $this->operationLog = new OperationLog();
+        $this->rates = [
+            'natural' => [
+                'commissionRate' => 0.3,
+                'dontTaxUnderPerWeek' => 1000,
+            ],
+            'legal' => [
+                'commissionRate' => 0.3,
+                'minCommission' => 0.5,
+            ]
+        ];
     }
 
     /**
@@ -23,6 +34,7 @@ class CashOutTest extends TestCase
     public function testCalculateCommissions(array $data, string $expectation)
     {
         $operation = new CashOut($this->operationLog);
+        $operation->setCommissionRates($this->rates[$data[2]]);
         $operation->setData($data);
         $operation->calculateCommision();
 
@@ -30,6 +42,26 @@ class CashOutTest extends TestCase
             $expectation,
             $operation->getCommission()
         );
+    }
+
+    public function testMultipleCashOutsInTheSameWeek()
+    {
+        $testData = [
+            [['2014-12-31', '4', 'natural', 'cash_out', '1200.00', 'EUR'], '0.6'],
+            [['2015-01-01', '4', 'natural', 'cash_out', '1000.00', 'EUR'], '3'],
+        ];
+
+        foreach ($testData as $data) {
+            $operation = new CashOut($this->operationLog);
+            $operation->setCommissionRates($this->rates[$data[0][2]]);
+            $operation->setData($data[0]);
+            $operation->process();
+
+            $this->assertEquals(
+                $data[1],
+                $operation->getCommission()
+            );
+        }
     }
 
     public function dataProviderForCalculateCommissionsTesting(): array

@@ -11,10 +11,21 @@ use Recruitment\CommissionTask\Service\OperationLog;
 class CashInTest extends TestCase
 {
     protected $operationLog;
+    protected $rates;
 
     protected function setUp()
     {
         $this->operationLog = new OperationLog();
+        $this->rates = [
+            'natural' => [
+                'commissionRate' => 0.03,
+                'maxCommission' => 5,
+            ],
+            'legal' => [
+                'commissionRate' => 0.03,
+                'maxCommission' => 5,
+            ]
+        ];
     }
 
     /**
@@ -23,6 +34,7 @@ class CashInTest extends TestCase
     public function testCalculateCommissions(array $data, string $expectation)
     {
         $operation = new CashIn($this->operationLog);
+        $operation->setCommissionRates($this->rates[$data[2]]);
         $operation->setData($data);
         $operation->calculateCommision();
 

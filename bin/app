@@ -4,7 +4,9 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use \Recruitment\CommissionTask\App;
 use Recruitment\CommissionTask\Service\StdOut;
+use Recruitment\CommissionTask\Service\StaticFileConfig;
 
 $output = new StdOut();
-$app    = new App($_SERVER['argv'], $output);
+$config = new StaticFileConfig('src/Config/conf.php');
+$app    = new App($_SERVER['argv'], $output, $config);
 $app->run();

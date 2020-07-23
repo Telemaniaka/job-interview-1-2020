@@ -8,23 +8,10 @@ use Recruitment\CommissionTask\Currency\Currency;
 
 class CashOut extends Operation
 {
-    protected $commissionRate = [
-        'legal' => 0.3,
-        'natural' => 0.3,
-    ];
-
-    protected $maxCommission = [
-        'natural' => 5,
-    ];
-
-    protected $minCommission = [
-        'legal' => 0.50,
-    ];
-
-    protected $dontTaxUnderPerWeek = 1000;
-
     protected $user;
     protected $userType;
+    protected $minCommission;
+    protected $dontTaxUnderPerWeek;
 
     public function setData(array $data)
     {
@@ -64,11 +51,11 @@ class CashOut extends Operation
 
     public function calculateCommissionLegal(): float
     {
-        $commission = $this->amount * ($this->commissionRate['legal'] / 100);
+        $commission = $this->amount * ($this->commissionRate / 100);
 
         $minCommision = Currency::convert(
             Currency::$defaultCurency,
-            $this->minCommission['legal'],
+            $this->minCommission,
             $this->currency
         );
 
@@ -83,36 +70,34 @@ class CashOut extends Operation
     {
         $weeklyCashOuts = $this->operationLog->getWeeklyTransactions($this->user, $this->date);
 
-        $taxableAmmount = $this->amount;
-        $convertedAmmount = floatval(Currency::convert(
+        $taxableAmount = $this->amount;
+        $convertedAmount = floatval(Currency::convert(
             $this->currency,
             $this->amount,
             Currency::$defaultCurency
         ));
 
         $weeklySum = array_sum($weeklyCashOuts);
-        if ($weeklySum + $convertedAmmount <= $this->dontTaxUnderPerWeek) {
+        if ($weeklySum + $convertedAmount <= $this->dontTaxUnderPerWeek) {
             if (count($weeklyCashOuts) <= 3) {
                 return 0;
             }
         }
 
         if ($weeklySum <= $this->dontTaxUnderPerWeek) {
-            $taxableAmmount =
+            $taxableAmount =
                 Currency::convert(
                     Currency::$defaultCurency,
-                    ($weeklySum + $convertedAmmount) - $this->dontTaxUnderPerWeek,
+                    ($weeklySum + $convertedAmount) - $this->dontTaxUnderPerWeek,
                     $this->currency
                 );
         }
 
         // not ideal but it's the end of the day. it should work
-        $commission = Currency::convert(
+        return Currency::convert(
             $this->currency,
-            $taxableAmmount * ($this->commissionRate['natural'] / 100),
+            $taxableAmount * ($this->commissionRate / 100),
             $this->currency
         );
-
-        return $commission;
     }
 }
