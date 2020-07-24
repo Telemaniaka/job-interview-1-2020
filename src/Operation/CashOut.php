@@ -8,44 +8,32 @@ use Recruitment\CommissionTask\Currency\Currency;
 
 class CashOut extends Operation
 {
-    protected $user;
-    protected $userType;
     protected $minCommission;
     protected $dontTaxUnderPerWeek;
 
-    public function setData(array $data)
+    public function process(string $date, int $userId, string $userType, float $amount, string $currency): float
     {
-        $this->date = $data[0];
-        $this->user = $data[1];
-        $this->userType = $data[2];
-        $this->amount = floatval($data[4]);
-        $this->currency = strtoupper($data[5]);
-    }
-
-    public function process()
-    {
-        parent::process();
+        $return = parent::process($date, $userId, $userType, $amount, $currency);
         $this->operationLog->record(
-            (int) $this->user,
+            $this->userId,
             $this->date,
             Currency::convert(
                 $this->currency,
                 $this->amount,
                 Currency::$defaultCurency
-            ));
+            )
+        );
+
+        return $return;
     }
 
-    public function calculateCommision()
+    public function calculateCommission(): float
     {
         if ($this->userType === 'legal') {
-            $this->commission = $this->calculateCommissionLegal();
-
-            return;
+            return $this->calculateCommissionLegal();
         }
         if ($this->userType === 'natural') {
-            $this->commission = $this->calculateCommissionNatural();
-
-            return;
+            return $this->calculateCommissionNatural();
         }
     }
 
@@ -68,8 +56,7 @@ class CashOut extends Operation
 
     public function calculateCommissionNatural(): float
     {
-        $weeklyCashOuts = $this->operationLog->getWeeklyTransactions($this->user, $this->date);
-
+        $weeklyCashOuts = $this->operationLog->getWeeklyTransactions($this->userId, $this->date);
         $taxableAmount = $this->amount;
         $convertedAmount = floatval(Currency::convert(
             $this->currency,

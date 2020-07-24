@@ -12,6 +12,7 @@ class CashInTest extends TestCase
 {
     protected $operationLog;
     protected $rates;
+    protected $operation;
 
     protected function setUp()
     {
@@ -26,6 +27,7 @@ class CashInTest extends TestCase
                 'maxCommission' => 5,
             ]
         ];
+        $this->operation = new CashIn($this->operationLog);
     }
 
     /**
@@ -33,23 +35,19 @@ class CashInTest extends TestCase
      */
     public function testCalculateCommissions(array $data, string $expectation)
     {
-        $operation = new CashIn($this->operationLog);
-        $operation->setCommissionRates($this->rates[$data[2]]);
-        $operation->setData($data);
-        $operation->calculateCommision();
-
+        $this->operation->setCommissionRates($this->rates[$data[2]]);
         $this->assertEquals(
             $expectation,
-            $operation->getCommission()
+            $this->operation->process(...$data)
         );
     }
 
     public function dataProviderForCalculateCommissionsTesting(): array
     {
         return [
-            'normal amount' => [['2016-01-05', '1', 'natural', 'cash_in', '200.00', 'EUR'], '0.06'],
-            'huge amount'   => [['2016-01-05', '1', 'natural', 'cash_in', '1000000.00', 'EUR'], '5.00'],
-            'other huge currency' => [['2016-01-05', '1', 'natural', 'cash_in', '1000000.00', 'USD'], '5.75'],
+            'normal amount' => [['2016-01-05', 1, 'natural', 200.00, 'EUR'], '0.06'],
+            'huge amount'   => [['2016-01-05', 1, 'natural', 1000000.00, 'EUR'], '5.00'],
+            'other huge currency' => [['2016-01-05', 1, 'natural', 1000000.00, 'USD'], '5.75'],
         ];
     }
 }

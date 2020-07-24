@@ -8,9 +8,9 @@ use Recruitment\CommissionTask\Service\OperationLog;
 
 class Operation
 {
-    protected $data;
-    protected $commission = 0;
     protected $date;
+    protected $userId;
+    protected $userType;
     protected $amount;
     protected $currency;
     protected $operationLog;
@@ -27,11 +27,6 @@ class Operation
         $this->operationLog = $log;
     }
 
-    public function setData(array $data)
-    {
-        $this->data = $data;
-    }
-
     public function setCommissionRates(array $rates)
     {
         foreach ($rates as $property => $value) {
@@ -41,18 +36,20 @@ class Operation
         }
     }
 
-    public function process()
+    public function process(string $date, int $userId, string $userType, float $amount, string $currency): float
     {
-        $this->calculateCommision();
+        $this->date = $date;
+        $this->userId = $userId;
+        $this->userType = $userType;
+        $this->userId = $userId;
+        $this->amount = $amount;
+        $this->currency = strtoupper($currency);
+
+        return $this->calculateCommission();
     }
 
-    public function calculateCommision()
+    public function calculateCommission(): float
     {
-        $this->commission = $this->amount * ($this->commissionRate / 100);
-    }
-
-    public function getCommission()
-    {
-        return $this->commission;
+        return $this->amount * ($this->commissionRate / 100);
     }
 }

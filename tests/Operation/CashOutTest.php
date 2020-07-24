@@ -11,6 +11,7 @@ use Recruitment\CommissionTask\Service\OperationLog;
 class CashOutTest extends TestCase
 {
     protected $operationLog;
+    protected $operation;
     protected $rates;
 
     protected function setUp()
@@ -26,6 +27,7 @@ class CashOutTest extends TestCase
                 'minCommission' => 0.5,
             ]
         ];
+        $this->operation = new CashOut($this->operationLog);
     }
 
     /**
@@ -33,33 +35,27 @@ class CashOutTest extends TestCase
      */
     public function testCalculateCommissions(array $data, string $expectation)
     {
-        $operation = new CashOut($this->operationLog);
-        $operation->setCommissionRates($this->rates[$data[2]]);
-        $operation->setData($data);
-        $operation->calculateCommision();
+        $this->operation->setCommissionRates($this->rates[$data[2]]);
 
         $this->assertEquals(
             $expectation,
-            $operation->getCommission()
+            $this->operation->process(...$data)
         );
     }
 
     public function testMultipleCashOutsInTheSameWeek()
     {
         $testData = [
-            [['2014-12-31', '4', 'natural', 'cash_out', '1200.00', 'EUR'], '0.6'],
-            [['2015-01-01', '4', 'natural', 'cash_out', '1000.00', 'EUR'], '3'],
+            [['2014-12-31', 4, 'natural', 1200.00, 'EUR'], '0.6'],
+            [['2015-01-01', 4, 'natural', 1000.00, 'EUR'], '3'],
         ];
 
         foreach ($testData as $data) {
-            $operation = new CashOut($this->operationLog);
-            $operation->setCommissionRates($this->rates[$data[0][2]]);
-            $operation->setData($data[0]);
-            $operation->process();
+            $this->operation->setCommissionRates($this->rates[$data[0][2]]);
 
             $this->assertEquals(
                 $data[1],
-                $operation->getCommission()
+                $this->operation->process(...$data[0])
             );
         }
     }
@@ -67,10 +63,10 @@ class CashOutTest extends TestCase
     public function dataProviderForCalculateCommissionsTesting(): array
     {
         return [
-            'over weekly max amount' => [['2014-12-31', '4', 'natural', 'cash_out', '1200.00', 'EUR'], '0.60'],
-            'at weekly max amount' => [['2016-01-05', '4', 'natural', 'cash_out', '1000.00', 'EUR'], '0'],
-            'other curency' => [['2016-01-06','1','natural','cash_out','30000','JPY'], '0'],
-            'other huge curency' => [['2016-02-19','5','natural','cash_out','3000000','JPY'], '8612'],
+            'over weekly max amount' => [['2014-12-31', 4, 'natural', 1200.00, 'EUR'], '0.60'],
+            'at weekly max amount' => [['2016-01-05', 4, 'natural', 1000.00, 'EUR'], '0'],
+            'other currency' => [['2016-01-06', 1, 'natural', 30000,'JPY'], '0'],
+            'other huge currency' => [['2016-02-19', 5, 'natural', 3000000, 'JPY'], '8612'],
         ];
     }
 }

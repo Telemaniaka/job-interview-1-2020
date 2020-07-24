@@ -10,20 +10,15 @@ class CashIn extends Operation
 {
     protected $maxCommission;
 
-    public function setData(array $data)
+    public function calculateCommission(): float
     {
-        $this->date = $data[0];
-        $this->amount = floatval($data[4]);
-        $this->currency = strtoupper($data[5]);
-    }
-
-    public function calculateCommision()
-    {
-        $this->commission = $this->amount * ($this->commissionRate / 100);
+        $commission = $this->amount * ($this->commissionRate / 100);
         $maxCommission = Currency::convert(Currency::$defaultCurency, $this->maxCommission, $this->currency);
 
-        if ($this->commission > $maxCommission) {
-            $this->commission = $maxCommission;
+        if ($commission > $maxCommission) {
+            $commission = $maxCommission;
         }
+
+        return $commission;
     }
 }

@@ -29,22 +29,43 @@ class Processor
     public function process(int $limit = 0)
     {
         while ($line = $this->file->getLine()) {
-            $operationData = explode(',', $line);
-            $operationName = lcfirst(str_replace('_', '', ucwords($operationData[3], '_')));
+            if ($limit > 0 && $this->processedItemCount > $limit) {
+                break;
+            }
+            $operationData = $this->transformInputToAssocArray($line);
 
-            if (!in_array($operationName, array_keys(Operation::$supportedOperations), true)) {
-                $this->output->print('Unsupported operation:'.$operationData[3]);
+            if (!in_array($operationData['operation'], array_keys(Operation::$supportedOperations), true)) {
+                $this->output->print('Unsupported operation:'.$operationData['operation']);
                 continue;
             }
 
-            $operation = new Operation::$supportedOperations[$operationName]($this->operationLog);
+            $operation = new Operation::$supportedOperations[$operationData['operation']]($this->operationLog);
             $operation->setCommissionRates($this->config->getArray(
-                'client.'.$operationData[2].'.'.$operationName
+                'client.'.$operationData['userType'].'.'.$operationData['operation']
             ));
-            $operation->setData($operationData);
-            $operation->process();
-            $commission = $operation->getCommission();
-            $this->output->print((string) $commission);
+            $commission = $operation->process(
+                $operationData['date'],
+                (int) $operationData['userId'],
+                $operationData['userType'],
+                floatval($operationData['amount']),
+                $operationData['currency']
+            );
+            $this->output->print(strval($commission));
+            ++$this->processedItemCount;
         }
+    }
+
+    protected function transformInputToAssocArray($line)
+    {
+        $data = explode(',', $line);
+
+        return [
+            'date' => $data[0],
+            'userId' => $data[1],
+            'userType' => $data[2],
+            'operation' => lcfirst(str_replace('_', '', ucwords($data[3], '_'))),
+            'amount' => $data[4],
+            'currency' => $data[5],
+        ];
     }
 }
